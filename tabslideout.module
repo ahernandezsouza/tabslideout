@@ -1,0 +1,493 @@
+<?php
+/**
+ * @file
+ * Implement jquery.tabSlideOut Plugin and settings
+ */
+
+
+/**
+ * Implements hook_libraries_info().
+ *
+ * For defining external libraries.
+ */
+
+function tabslideout_libraries_info() {
+
+  // A very simple library. No changing APIs (hence, no versions), no variants.
+  // Expected to be extracted into 'sites/all/libraries/simple'.
+  $libraries['tabslideout'] = array(
+    'name' => 'jquery.tabSlideOut.js',
+    'vendor url' => 'https://github.com/hawk-ip/jquery.tabSlideOut.js', // <script src="https://gist.github.com/ahernandezsouza/e713688f6dde1d6a9a68b493b6a239e7.js"></script>
+    'download url' => 'https://raw.githubusercontent.com/hawk-ip/jquery.tabSlideOut.js/master/jquery.tabSlideOut.js',
+    'version arguments' => array(
+      'file' => 'jquery.tabSlideOut.js', // Could be any file with version info
+      'pattern' => '/v(\d+.\d)/',
+      'lines' => 5,
+    ),
+    'files' => array(
+      'js' => array('jquery.tabSlideOut.js'), //this can be a path to the file location like array('lib/simple.js')
+    ),
+  );
+
+  return $libraries;
+}
+
+libraries_load($name);
+
+if (($library = libraries_detect($name)) && !empty($library['installed'])) {
+  // The library is installed. Awesome!
+}
+else {
+  // Something went wrong. :(
+  // This contains a short status code of what went wrong, such as 'not found'.
+  $error = $library['error'];
+  // This contains a detailed (localized) error message.
+  $error_message = $library['error message'];
+}
+
+
+/**
+ * Implementing Menu Hook.
+ */
+function tabslideout_menu() {
+  $items = array();
+  $items['admin/config/user-interface/tabslideout'] = array(
+    'title' => 'tabSlideOut',
+    'description' => 'Configuration for the minipanel using the tabSlideOut Plugin.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tabslideout_configuration_form'),
+    'access arguments' => array('administer users'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+* Form builder; Create and display the User Warn configuration
+* settings form.
+*/
+function tabslideout_configuration_form($form, &$form_state) {
+
+// General Settings Fieldset.
+$form['tabslideout_general'] = array(
+  '#type' => 'fieldset',
+  '#title' => t('General settings'),
+  '#weight' => -1,
+  '#collapsible' => TRUE,
+  '#collapsed' => FALSE,
+);
+
+// Offset Settings Fieldset.
+$form['tabslideout_foffset'] = array(
+  '#type' => 'fieldset',
+  '#title' => t('Offset settings'),
+  '#weight' => 0,
+  '#collapsible' => TRUE,
+  '#collapsed' => FALSE,
+);
+
+// Animation Settings Fieldset.
+$form['tabslideout_animation'] = array(
+  '#type' => 'fieldset',
+  '#title' => t('Animation settings'),
+  '#weight' => 0,
+  '#collapsible' => TRUE,
+  '#collapsed' => FALSE,
+);
+
+// Other Settings Fieldset.
+$form['tabslideout_other'] = array(
+  '#type' => 'fieldset',
+  '#title' => t('Other settings'),
+  '#weight' => 0,
+  '#collapsible' => TRUE,
+  '#collapsed' => FALSE,
+);
+
+// Selector for the tabSlideOut.
+  $form['tabslideout_selector'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Selector'),
+    '#description' => t('JQuery selector for the panel, can use #.'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_selector', '#mini-panel-slideout'),
+  '#weight' => -5,
+  );
+
+// tabLocation: 'bottom', position of the tab: left, right, top or bottom.
+  $form['tabslideout_general']['tabslideout_tablocation'] = array(
+     '#type' => 'select',
+     '#title' => t('Tab Location (tabLocation)'),
+     '#options' => array(
+        t('left') => t('left'),
+        t('right') => t('right'),
+        t('top') => t('top'),
+        t('bottom') => t('bottom'),
+     ),
+    '#default_value' => variable_get('tabslideout_tablocation',0),
+    '#description' => t('Position of the tab: left, right, top or bottom.'),
+   );
+
+// positioning: 'fixed', can also use absolute, so tabs move when window scrolls
+  $form['tabslideout_general']['tabslideout_positioning'] = array(
+    '#type' => 'select',
+    '#title' => t('Positioning (positioning)'),
+    '#description' => t('can also use absolute, so tabs move when window scrolls.'),
+    '#options' => array(
+        t('fixed') => t('fixed'),
+        t('absolute') => t('absolute'),
+     ),
+    '#default_value' => variable_get('tabslideout_positioning',0),
+  );
+
+// tabHandle: '.handle' JQuery selector for the tab, can use #.
+  $form['tabslideout_general']['tabslideout_positioning']['tabslideout_tabhandle'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tab Handle (tabHandle)'),
+    '#description' => t('JQuery selector for the tab, can use #.'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_tabhandle','.handle'),
+  );
+
+  $form['tabslideout_general']['tabslideout_positioning'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Pages'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#weight' => 5,
+  );
+
+// either/or paths
+  $form['tabslideout_general']['tabslideout_positioning']['tabslideout_pages'] = array(
+    '#type' => 'radios',
+    '#title' => t('Show tabSlideOut on specific pages'),
+    '#default_value' => variable_get('tabslideout_pages', 0),
+    '#options' => array(
+      0 => t('All pages except those listed'),
+      1 => t('Only the listed pages'),
+    ),
+  );
+
+// paths
+  $form['tabslideout_general']['tabslideout_positioning']['tabslideout_paths'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Specify Pages'),
+    '#default_value' => variable_get('tabslideout_paths', '*'),
+    '#description' => t(""
+      . "Specify pages by using their paths. Enter one path per line. "
+      . "The '*' character is a wildcard. Example paths are "
+      . "%blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.",
+      array(
+        '%blog' => 'blog',
+        '%blog-wildcard' => 'blog/*',
+        '%front' => '<front>'
+      )
+    ),
+  );
+
+// speed: 300, time to animate
+  $form['tabslideout_animation']['tabslideout_speed'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Speed (speed)'),
+    '#description' => t('Time to animate.'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_speed','300'),
+    '#required' => TRUE,
+  );
+
+// action: 'hover',  // action which will open the panel, e.g. 'hover'
+  $form['tabslideout_general']['tabslideout_action'] = array(
+     '#type' => 'select',
+     '#title' => t('Action (action)'),
+     '#options' => array(
+        t('hover') => t('hover'),
+        t('click') => t('click'),
+     ),
+    '#default_value' => variable_get('tabslideout_action',1),
+    '#description' => t('Action which will open the panel, e.g. "hover", "click".'),
+    '#required' => TRUE,
+  );
+
+// clickScreenToClose: true, // close tab when rest of screen clicked
+  $form['tabslideout_general']['tabslideout_clickscreentoclose'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Click screen to close (clickScreenToClose)'),
+    '#description' => t('close tab when rest of screen clicked.'),
+    '#default_value' => variable_get('tabslideout_clickscreentoclose',TRUE),
+  );
+
+// offset: '200px', // panel dist from top or left (bottom or right if offsetReverse is true)
+  $form['tabslideout_foffset']['tabslideout_offset'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Offset (offset)'),
+    '#description' => t('panel distance from top or left (bottom or right if offsetReverse is true).'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#required' => TRUE,
+    '#default_value' => '200px',
+    '#default_value' => variable_get('tabslideout_offset','200px'),
+  );
+
+// offsetReverse: false, if true, panel is aligned with right or bottom of window
+  $form['tabslideout_foffset']['tabslideout_offsetreverse'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Offset Reverse (offsetReverse)'),
+    '#description' => t('if set, panel is aligned with right or bottom of window.'),
+    '#default_value' => variable_get('tabslideout_offsetreverse',FALSE),
+  );
+
+// handleOffset: null, // e.g. '10px'. If null, detects panel border to align handle nicely
+  $form['tabslideout_foffset']['tabslideout_handleoffset'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Handle Offset (handleOffset)'),
+    '#description' => t('e.g. "10px". If null, detects panel border to align handle nicely.'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_handleoffset',null),
+  );
+
+// handleOffsetReverse: false, // if true, handle aligned with right or bottom of panel
+  $form['tabslideout_foffset']['tabslideout_handleoffsetreverse'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Handle Offset Reverse (handleOffsetReverse)'),
+    '#description' => t('if true, handle aligned with right or bottom of panel.'),
+    '#default_value' => variable_get('tabslideout_handleoffsetreverse',FALSE),
+  );
+
+// otherOffset: null, if set, panel size is set to maintain this dist from bottom or right (top or left if offsetReverse)
+  $form['tabslideout_foffset']['tabslideout_otheroffset'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Other Offset (otherOffset)'),
+    '#description' => t('if set, panel size is set to maintain this distance from bottom or right (top or left if offsetReverse).'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_otheroffset',null),
+  );
+
+// bounceDistance: '50px', // how far bounce event will move everything
+  $form['tabslideout_animation']['tabslideout_bouncedistance'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Bounce Distance (bounceDistance)'),
+    '#description' => t('how far bounce event will move everything.'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_bouncedistance','50px'),
+  );
+
+// bounceTimes: 4, // how many bounces when 'bounce' is called
+  $form['tabslideout_animation']['tabslideout_bouncetimes'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Bounce Times (bounceTimes)'),
+    '#description' => t('how many bounces when "bounce" is called.'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_bouncetimes',4),
+  );
+
+// tabImage: null, // optional image to show in the tab
+  $form['tabslideout_other']['tabslideout_tabimage'] = array(
+    '#type' => 'managed_file',
+    '#name' => 'tabslideout_image',
+    '#title' => t('Tab Image (tabImage)'),
+    '#size' => 40,
+    '#description' => t('optional image to show in the tab.'),
+    '#upload_location' => 'public://',
+    '#default_value' => variable_get('tabslideout_tabimage',null),
+  );
+
+// tabImageHeight: null, // optional IE8 and lower only, else autodetected size
+  $form['tabslideout_other']['tabslideout_tabimageheight'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tab Image Height (tabImageHeight)'),
+    '#description' => t('optional IE8 and lower only, else autodetected size.'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_tabimageheight',null),
+  );
+
+// tabImageWidth: null, // optional IE8 and lower only, else autodetected size
+  $form['tabslideout_other']['tabslideout_tabimagewidth'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Tab Image Width (tabImageWidth)'),
+    '#description' => t('optional IE8 and lower only, else autodetected size.'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_tabimagewidth',null),
+  );
+
+// onLoadSlideOut: false, // slide out after DOM load
+  $form['tabslideout_other']['tabslideout_onloadslideout'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('On load, Slide Out (onLoadSlideOut)'),
+    '#description' => t('slide out after DOM load.'),
+    '#default_value' => variable_get('tabslideout_onloadslideout',FALSE),
+  );
+
+// toggleButton: '.tab-opener', // not often used
+  $form['tabslideout_other']['tabslideout_togglebutton'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Toggle button (toggleButton)'),
+    '#description' => t('not often used.'),
+    '#size' => 40,
+    '#maxlength' => 120,
+    '#default_value' => variable_get('tabslideout_togglebutton','.tab-opener'),
+  );
+
+/*// Submit button
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save settings'),
+  );
+  return $form;*/
+  return system_settings_form($form);
+
+}
+
+/**
+* Save configuration settings for Image File.
+*/
+
+function tabslideout_configuration_form_submit($form, &$form_state) {
+
+  if (isset($form_state['values']['tabslideout_other']['tabslideout_tabimage'])) {
+    $file = file_load($form_state['values']['tabslideout_other']['tabslideout_tabimage']);
+
+    $file->status = FILE_STATUS_PERMANENT;
+
+    file_save($file);
+  }
+
+  drupal_set_message(t('The settings have been saved'));
+
+}
+
+/**
+ * Show nicemessages on specific pages
+ */
+function tabslideout_visibility(){
+  $pages = variable_get('tabslideout_paths');
+  $visibility = variable_get('tabslideout_pages');
+  if (!empty($pages)) {
+    // Convert path to lowercase. This allows comparison of the same path
+    // with different case. Ex: /Page, /page, /PAGE.
+    $pages = drupal_strtolower($pages);
+    // Convert the Drupal path to lowercase
+    $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+    // Compare the lowercase internal and lowercase path alias (if any).
+    $page_match = drupal_match_path($path, $pages);
+    // When $visibility has a value of 0
+    // preprocess toggles to display nicemessgaes on all pages except those listed in $pages.
+    // When set to 1,
+    // it is displayed only on those pages listed in $pages.
+    $page_match = !($visibility xor $page_match);
+      if ($page_match) {
+         return TRUE;
+      } else {
+         return FALSE;
+      }
+    // else if ($pages is empty) and $visibility is not NULL (Only listes pages)
+    // toggles not to display Nicemessgaes on any pages at all.
+   } else if ($visibility) {
+      return FALSE;
+    // else if ($pages is empty) and $visibility is NULL (All pages except listed)
+    // toggles to display Nicemessages on all pages.
+   } else {
+      return TRUE;
+  }
+}
+
+/**
+ * Implements hook_init().
+ */
+function tabslideout_init() {
+
+  $selector = variable_get('tabslideout_selector', '');
+  $tabLocation = variable_get('tabslideout_tablocation', '');
+  $tabHandle = variable_get('tabslideout_tabhandle', '');
+  $speed = variable_get('tabslideout_speed', '');
+  $action = variable_get('tabslideout_action', '');
+  $offset = variable_get('tabslideout_offset', '');
+  $offsetReverse = variable_get('tabslideout_offsetreverse', null);
+  $otherOffset = variable_get('tabslideout_otheroffset', null);
+  $handleOffset = variable_get('tabslideout_handleoffset', null);
+  $handleOffsetReverse = variable_get('tabslideout_handleoffsetreverse', null);
+  $bounceDistance = variable_get('tabslideout_bouncedistance', '');
+  $bounceTimes = variable_get('tabslideout_bouncetimes', null);
+  $positioning = variable_get('tabslideout_positioning', '');
+  $tabImage = variable_get('tabslideout_tabimage', null);
+  $tabImageHeight = variable_get('tabslideout_tabimageheight', null);
+  $tabImageWidth = variable_get('tabslideout_tabimagewidth', null);
+  $onLoadSlideOut = variable_get('tabslideout_onloadslideout', null);
+  $clickScreenToClose = variable_get('tabslideout_clickscreentoclose', null);
+  $toggleButton = variable_get('tabslideout_toggleButton', '');
+
+  // Will only add the assets if the selector is set.
+  if (variable_get('tabslideout_selector', FALSE) && trim($selector) && tabslideout_visibility()) {
+    drupal_add_css(drupal_get_path('module', 'tabslideout') .
+      '/css/jquery.tabSlideOut.css');
+    $settings = array(
+        'tabSlideOut' => array(
+        'selector' => $selector,
+        'tabLocation' => $tabLocation,
+        'tabHandle' => $tabHandle,
+        'speed' => $speed,
+        'action' => $action,
+        'offset' => $offset,
+        'offsetReverse' => $offsetReverse,
+        'otherOffset' => $otherOffset,
+        'handleOffset' => $handleOffset,
+        'handleOffsetReverse' => $handleOffsetReverse,
+        'bounceDistance' => $bounceDistance,
+        'bounceTimes' => $bounceTimes,
+        'positioning' => $positioning,
+        'tabImage' => $tabImage,
+        'tabImageHeight' => $tabImageHeight,
+        'tabImageWidth' => $tabImageWidth,
+        'onLoadSlideOut' => $onLoadSlideOut,
+        'clickScreenToClose' => $clickScreenToClose,
+        'toggleButton' => $toggleButton,
+      ),
+    );
+    drupal_add_js($settings, 'setting');
+    drupal_add_js(drupal_get_path('module', 'tabslideout') . '/js/tabSlideOut.js','file');
+
+  }
+}
+
+/**
+ * Show tabslideout pages
+ */
+function tabslideout_pages_visibility(){
+  $pages = variable_get('nicemessages_paths');
+  $visibility = variable_get('nicemessages_pages');
+  if (!empty($pages)) {
+    // Convert path to lowercase. This allows comparison of the same path
+    // with different case. Ex: /Page, /page, /PAGE.
+    $pages = drupal_strtolower($pages);
+    // Convert the Drupal path to lowercase
+    $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+    // Compare the lowercase internal and lowercase path alias (if any).
+    $page_match = drupal_match_path($path, $pages);
+    // When $visibility has a value of 0
+    // preprocess toggles to display nicemessgaes on all pages except those listed in $pages.
+    // When set to 1,
+    // it is displayed only on those pages listed in $pages.
+    $page_match = !($visibility xor $page_match);
+      if ($page_match) {
+         return TRUE;
+      } else {
+         return FALSE;
+      }
+    // else if ($pages is empty) and $visibility is not NULL (Only listes pages)
+    // toggles not to display Nicemessgaes on any pages at all.
+   } else if ($visibility) {
+      return FALSE;
+    // else if ($pages is empty) and $visibility is NULL (All pages except listed)
+    // toggles to display Nicemessages on all pages.
+   } else {
+      return TRUE;
+  }
+}
