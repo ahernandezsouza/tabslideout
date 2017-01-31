@@ -11,7 +11,7 @@ To use the module:
 
 1. Download the module under sites/all/modules.
 2. Set the jquery.tabSlideOut.js file inside sites/libraries/tabslideout.
-3. Install [Panels](drupal.org/project/panels).
+3. Install [Panels](https://drupal.org/project/panels).
 4. Enable the tabslideout module.
 5. Then create a Panel such as this example:
 
